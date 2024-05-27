@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from 'uuid';
+
 export function InputForm({refreshState}) {
     const data = [];
 
@@ -37,22 +39,33 @@ export function InputForm({refreshState}) {
 
     function Save(e) {
         e.preventDefault();
-        const dateValue = document.getElementById('date');
-        const distanceValue = document.getElementById('distance');
+        const dateValue = document.getElementById('date').value;
+        const distanceValue = parseFloat(document.getElementById('distance').value);
 
-        if (dateValue.value.length !== 0 && distanceValue.value.length !== 0) {
-            data.push({
-                date: dateValue.value,
-                distance: distanceValue.value
-            })
+        if (dateValue.length !== 0 && !isNaN(distanceValue)) {
+            const filteredArray = Object.entries(localStorage).filter(item => item[0].includes('Steps'));
 
-            dateValue.value = '';
-            distanceValue.value = '';
+            let dateExists = false;
+
+            for (let i = 0; i < filteredArray.length; i++) {
+                const [storedDate, storedDistance] = filteredArray[i][1].split(',');
+                if (storedDate === dateValue) {
+                    const updatedDistance = parseFloat(storedDistance) + distanceValue;
+                    localStorage.setItem(filteredArray[i][0], `${dateValue},${updatedDistance}`);
+                    dateExists = true;
+                    break;
+                }
+            }
+
+            if (!dateExists) {
+                const uniqueKey = uuidv4();
+                localStorage.setItem(`Steps: ${uniqueKey}`, `${dateValue},${distanceValue}`);
+            }
+
+            document.getElementById('date').value = '';
+            document.getElementById('distance').value = '';
         }
-        
-        for (let i = 0; i < data.length; i++) {
-            localStorage.setItem(data[i].date, data[i].distance);
-        }
+
         refreshState();
     }
 }
